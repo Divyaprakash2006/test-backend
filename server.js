@@ -23,6 +23,7 @@ app.use('/api/exam', require('./routes/exam'));
 app.use('/api/analytics', require('./routes/analytics'));
 
 // Health check & Base API
+app.get('/', (req, res) => res.json({ success: true, message: 'TestZen Backend is active' }));
 app.get('/api', (req, res) => res.json({ success: true, message: 'TestZen API is online' }));
 app.get('/api/health', (req, res) => res.json({ success: true, message: 'Server is running' }));
 
