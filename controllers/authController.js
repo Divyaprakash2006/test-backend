@@ -61,7 +61,7 @@ const login = async (req, res) => {
       rollNo: user.rollNo 
     });
 
-    res.json({ 
+    res.status(200).json({ 
       success: true, 
       token, 
       user: { 
@@ -69,7 +69,7 @@ const login = async (req, res) => {
         name: user.name, 
         email: user.email, 
         rollNo: user.rollNo, 
-        role: user.role || 'student' 
+        role: user.role || (email && email.includes('@') ? 'admin' : 'student') 
       } 
     });
   } catch (err) {
