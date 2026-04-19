@@ -22,7 +22,8 @@ app.use('/api/students', require('./routes/students'));
 app.use('/api/exam', require('./routes/exam'));
 app.use('/api/analytics', require('./routes/analytics'));
 
-// Health check
+// Health check & Base API
+app.get('/api', (req, res) => res.json({ success: true, message: 'TestZen API is online' }));
 app.get('/api/health', (req, res) => res.json({ success: true, message: 'Server is running' }));
 
 // 404

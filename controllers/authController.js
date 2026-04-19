@@ -14,9 +14,21 @@ const register = async (req, res) => {
 
     const passwordHash = await bcrypt.hash(password, 12);
     const user = await User.create({ name, email, rollNo, passwordHash, role: role || 'student' });
+    if (!user) throw new Error('Failed to create user account');
+
     const token = signToken({ id: user._id, role: user.role, name: user.name, rollNo: user.rollNo });
 
-    res.status(201).json({ success: true, token, user: { id: user._id, name: user.name, email: user.email, rollNo: user.rollNo, role: user.role } });
+    res.status(201).json({ 
+      success: true, 
+      token, 
+      user: { 
+        id: user._id, 
+        name: user.name, 
+        email: user.email, 
+        rollNo: user.rollNo, 
+        role: user.role || 'student' 
+      } 
+    });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -42,8 +54,24 @@ const login = async (req, res) => {
     const match = await bcrypt.compare(password, user.passwordHash);
     if (!match) return res.status(401).json({ success: false, message: 'Invalid credentials' });
 
-    const token = signToken({ id: user._id, role: user.role, name: user.name, rollNo: user.rollNo });
-    res.json({ success: true, token, user: { id: user._id, name: user.name, email: user.email, rollNo: user.rollNo, role: user.role } });
+    const token = signToken({ 
+      id: user._id, 
+      role: user.role || 'student', 
+      name: user.name, 
+      rollNo: user.rollNo 
+    });
+
+    res.json({ 
+      success: true, 
+      token, 
+      user: { 
+        id: user._id, 
+        name: user.name, 
+        email: user.email, 
+        rollNo: user.rollNo, 
+        role: user.role || 'student' 
+      } 
+    });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
