@@ -40,7 +40,13 @@ const createTest = async (req, res) => {
 // PUT /api/tests/:id
 const updateTest = async (req, res) => {
   try {
-    const test = await Test.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const { title, subject, description, duration, passmark, scheduledDate, isPublished } = req.body;
+    const updateData = { title, subject, description, duration, passmark, scheduledDate, isPublished };
+    
+    // Remove undefined fields to avoid overwriting with null unless intended
+    Object.keys(updateData).forEach(key => updateData[key] === undefined && delete updateData[key]);
+
+    const test = await Test.findByIdAndUpdate(req.params.id, updateData, { new: true });
     if (!test) return res.status(404).json({ success: false, message: 'Test not found' });
     
     await logActivity({
