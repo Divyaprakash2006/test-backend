@@ -29,6 +29,15 @@ const markAllAsRead = async (req, res) => {
   }
 };
 
+const clearNotifications = async (req, res) => {
+  try {
+    await Notification.deleteMany({ recipient: req.user.id });
+    res.json({ success: true, message: 'All notifications cleared' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
 // Helper for other controllers to send notifications
 const createNotification = async ({ recipient, sender, title, message, type, link }) => {
   try {
@@ -51,5 +60,6 @@ module.exports = {
   getNotifications,
   markAsRead,
   markAllAsRead,
+  clearNotifications,
   createNotification
 };
