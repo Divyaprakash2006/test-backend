@@ -21,6 +21,7 @@ app.use('/api/tests', require('./routes/tests'));
 app.use('/api/students', require('./routes/students'));
 app.use('/api/exam', require('./routes/exam'));
 app.use('/api/analytics', require('./routes/analytics'));
+app.use('/api/notifications', require('./routes/notification'));
 
 // Health check & Base API
 app.get('/', (req, res) => res.json({ success: true, message: 'TestZen Backend is active' }));
@@ -45,10 +46,38 @@ if (!DB_URI) {
   process.exit(1);
 }
 
+const http = require('http');
+const server = http.createServer(app);
+const { Server } = require('socket.io');
+
+const io = new Server(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"]
+  }
+});
+
+// Basic Socket connection setup
+io.on('connection', (socket) => {
+  console.log('🔗 Client connected:', socket.id);
+
+  socket.on('join', (userId) => {
+    socket.join(userId);
+    console.log(`👤 User ${userId} joined their notification room`);
+  });
+
+  socket.on('disconnect', () => {
+    console.log('🔌 Client disconnected');
+  });
+});
+
+// Make io accessible globally
+global.io = io;
+
 mongoose.connect(DB_URI)
   .then(() => {
     console.log('✅ MongoDB connected');
-    app.listen(PORT, '0.0.0.0', () => console.log(`🚀 Server running on port ${PORT}`));
+    server.listen(PORT, '0.0.0.0', () => console.log(`🚀 Server running on port ${PORT}`));
   })
   .catch(err => {
     console.error('❌ MongoDB connection error:', err.message);

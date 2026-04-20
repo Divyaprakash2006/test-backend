@@ -1,6 +1,8 @@
 const Test = require('../models/Test');
 const Question = require('../models/Question');
 const logActivity = require('../utils/activityLogger');
+const { createNotification } = require('./notificationController');
+const User = require('../models/User');
 
 // GET /api/tests
 const getTests = async (req, res) => {
@@ -26,6 +28,19 @@ const createTest = async (req, res) => {
     const { title, subject, description, duration, passmark, scheduledDate } = req.body;
     const test = await Test.create({ title, subject, description, duration, passmark, scheduledDate, createdBy: req.user.id });
     
+    // Notify all students about the new test
+    const students = await User.find({ role: 'student' });
+    for (const student of students) {
+      await createNotification({
+        recipient: student._id,
+        sender: req.user.id,
+        title: 'New Test Created',
+        message: `A new test "${test.title}" has been created for ${test.subject}.`,
+        type: 'test_created',
+        link: `/`
+      });
+    }
+
     await logActivity({
       adminId: req.user.id,
       action: 'created',

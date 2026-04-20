@@ -6,6 +6,7 @@ const csv = require('csv-parser');
 const { Readable } = require('stream');
 const XLSX = require('xlsx');
 const logActivity = require('../utils/activityLogger');
+const { createNotification } = require('./notificationController');
 
 // GET /api/students
 const getStudents = async (req, res) => {
@@ -101,8 +102,20 @@ const enrollStudent = async (req, res) => {
 
     for (const testId of testIds) {
       if (!student.enrolledTests.includes(testId)) {
-        student.enrolledTests.push(testId);
-        await Test.findByIdAndUpdate(testId, { $addToSet: { enrolledStudents: student._id } });
+        const t = await Test.findById(testId);
+        if (t) {
+          student.enrolledTests.push(testId);
+          await Test.findByIdAndUpdate(testId, { $addToSet: { enrolledStudents: student._id } });
+          
+          await createNotification({
+            recipient: student._id,
+            sender: req.user.id,
+            title: 'New Test Enrollment',
+            message: `You have been enrolled in the test: ${t.title}`,
+            type: 'enrolled',
+            link: `/`
+          });
+        }
       }
     }
     await student.save();
