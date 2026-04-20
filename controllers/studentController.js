@@ -8,6 +8,7 @@ const { Readable } = require('stream');
 const XLSX = require('xlsx');
 const logActivity = require('../utils/activityLogger');
 const { createNotification } = require('./notificationController');
+const { sendEnrollmentEmail } = require('../utils/emailService');
 
 // GET /api/students
 const getStudents = async (req, res) => {
@@ -114,8 +115,14 @@ const enrollStudent = async (req, res) => {
             title: 'New Test Enrollment',
             message: `You have been enrolled in the test: ${t.title}`,
             type: 'enrolled',
-            link: `/`
           });
+
+          // Send enrollment email
+          try {
+            await sendEnrollmentEmail(student, t);
+          } catch (emailErr) {
+            console.error(`Failed to send enrollment email to ${student.email}:`, emailErr);
+          }
         }
       }
     }
