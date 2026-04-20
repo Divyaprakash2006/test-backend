@@ -2,6 +2,7 @@ const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 const Test = require('../models/Test');
 const Result = require('../models/Result');
+const ExamSession = require('../models/ExamSession');
 const csv = require('csv-parser');
 const { Readable } = require('stream');
 const XLSX = require('xlsx');
@@ -241,4 +242,29 @@ const bulkImport = async (req, res) => {
   } catch (err) { res.status(500).json({ success: false, message: err.message }); }
 };
 
-module.exports = { getStudents, getStudent, createStudent, updateStudent, deleteStudent, enrollStudent, clearEnrollments, bulkImport };
+// DELETE /api/students/:id/tests/:testId/reset
+const resetTestAttempt = async (req, res) => {
+  try {
+    const { id: studentId, testId } = req.params;
+    
+    // Find student to log activity
+    const student = await User.findById(studentId);
+    if (!student) return res.status(404).json({ success: false, message: 'Student not found' });
+
+    // Delete session and results
+    await ExamSession.deleteMany({ student: studentId, test: testId });
+    await Result.deleteMany({ student: studentId, test: testId });
+
+    await logActivity({
+      adminId: req.user.id,
+      action: 'reset attempt',
+      targetType: 'test',
+      targetName: `Attempt for student ${student.name}`,
+      details: `Test ID: ${testId}`
+    });
+
+    res.json({ success: true, message: 'Test attempt reset successfully' });
+  } catch (err) { res.status(500).json({ success: false, message: err.message }); }
+};
+
+module.exports = { getStudents, getStudent, createStudent, updateStudent, deleteStudent, enrollStudent, clearEnrollments, bulkImport, resetTestAttempt };

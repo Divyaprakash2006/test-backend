@@ -5,7 +5,7 @@ const authMiddleware = require('../middleware/authMiddleware');
 const roleGuard = require('../middleware/roleGuard');
 const {
   getStudents, getStudent, createStudent, updateStudent, deleteStudent,
-  enrollStudent, clearEnrollments, bulkImport
+  enrollStudent, clearEnrollments, bulkImport, resetTestAttempt
 } = require('../controllers/studentController');
 
 const upload = multer({
@@ -27,6 +27,7 @@ router.put('/:id', updateStudent);
 router.delete('/:id', deleteStudent);
 router.post('/:id/enroll', enrollStudent);
 router.delete('/:id/enroll', clearEnrollments);
+router.delete('/:id/tests/:testId/reset', resetTestAttempt);
 router.post('/bulk-import', upload.single('file'), bulkImport);
 
 module.exports = router;
