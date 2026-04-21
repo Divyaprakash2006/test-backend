@@ -25,8 +25,8 @@ const getTest = async (req, res) => {
 // POST /api/tests
 const createTest = async (req, res) => {
   try {
-    const { title, subject, description, duration, passmark, scheduledDate, expiryDate } = req.body;
-    const test = await Test.create({ title, subject, description, duration, passmark, scheduledDate, expiryDate, createdBy: req.user.id });
+    const { title, subject, description, duration, passmark, scheduledDate, expiryDate, unlimitedAttempts, maxAttempts } = req.body;
+    const test = await Test.create({ title, subject, description, duration, passmark, scheduledDate, expiryDate, unlimitedAttempts, maxAttempts, createdBy: req.user.id });
     
     // Notify all students about the new test
     const students = await User.find({ role: 'student' });
@@ -55,8 +55,8 @@ const createTest = async (req, res) => {
 // PUT /api/tests/:id
 const updateTest = async (req, res) => {
   try {
-    const { title, subject, description, duration, passmark, scheduledDate, expiryDate, isPublished } = req.body;
-    const updateData = { title, subject, description, duration, passmark, scheduledDate, expiryDate, isPublished };
+    const { title, subject, description, duration, passmark, scheduledDate, expiryDate, isPublished, unlimitedAttempts, maxAttempts } = req.body;
+    const updateData = { title, subject, description, duration, passmark, scheduledDate, expiryDate, isPublished, unlimitedAttempts, maxAttempts };
     
     // Remove undefined fields to avoid overwriting with null unless intended
     Object.keys(updateData).forEach(key => updateData[key] === undefined && delete updateData[key]);

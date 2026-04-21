@@ -18,6 +18,14 @@ const startSession = async (req, res) => {
     // Check archive/limit? User wants unlimited so we just count for attemptNumber
     const previousResultsCount = await Result.countDocuments({ student: req.user.id, test: test._id });
 
+    // Enforce attempt limits if not unlimited
+    if (!test.unlimitedAttempts && previousResultsCount >= (test.maxAttempts || 1)) {
+      return res.status(400).json({ 
+        success: false, 
+        message: `Maximum attempts (${test.maxAttempts || 1}) reached for this test.` 
+      });
+    }
+
     // Check scheduling and expiry
     const now = new Date();
     if (test.scheduledDate) {
@@ -164,7 +172,7 @@ const getMyResult = async (req, res) => {
   try {
     const results = await Result.find({ student: req.user.id, test: req.params.testId })
       .populate({ path: 'questionAnalysis.question', model: 'Question' })
-      .populate('test', 'title subject passmark')
+      .populate('test', 'title subject passmark unlimitedAttempts maxAttempts scheduledDate expiryDate duration')
       .sort({ attemptNumber: -1 }); // Latest first
 
     if (!results || results.length === 0) {

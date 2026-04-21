@@ -13,6 +13,8 @@ const testSchema = new mongoose.Schema({
   isPublished: { type: Boolean, default: false },
   totalMarks: { type: Number, default: 0 },
   expiryDate: { type: Date },
+  unlimitedAttempts: { type: Boolean, default: false },
+  maxAttempts: { type: Number, default: 1 },
 }, { timestamps: true });
 
 module.exports = mongoose.model('Test', testSchema);
