@@ -31,7 +31,7 @@ const startSession = async (req, res) => {
     if (test.scheduledDate) {
       const sched = new Date(test.scheduledDate);
       if (now < sched) {
-        return res.status(400).json({ success: false, message: `Test scheduled to start at ${sched.toLocaleString()}` });
+        return res.status(400).json({ success: false, message: `Test scheduled to start at ${sched.toLocaleString('en-US', { timeZone: process.env.APP_TIMEZONE || 'Asia/Kolkata' })}` });
       }
     }
 

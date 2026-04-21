@@ -22,7 +22,8 @@ const sendEnrollmentEmail = async (student, tests) => {
   const testRowsHtml = testList.map(test => {
     const format = { 
       dateStyle: 'medium', 
-      timeStyle: 'short' 
+      timeStyle: 'short',
+      timeZone: process.env.APP_TIMEZONE || 'Asia/Kolkata'
     };
     
     const startStr = test.scheduledDate 
