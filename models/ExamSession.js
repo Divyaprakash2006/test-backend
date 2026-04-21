@@ -20,6 +20,7 @@ const examSessionSchema = new mongoose.Schema({
   grade: { type: String, default: '' },
   passed: { type: Boolean, default: false },
   timeTaken: { type: Number, default: 0 }, // total seconds
+  attemptNumber: { type: Number, default: 1 },
 }, { timestamps: true });
 
 module.exports = mongoose.model('ExamSession', examSessionSchema);

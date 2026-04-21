@@ -12,6 +12,7 @@ const testSchema = new mongoose.Schema({
   enrolledStudents: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   isPublished: { type: Boolean, default: false },
   totalMarks: { type: Number, default: 0 },
+  expiryDate: { type: Date },
 }, { timestamps: true });
 
 module.exports = mongoose.model('Test', testSchema);

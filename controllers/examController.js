@@ -15,15 +15,26 @@ const startSession = async (req, res) => {
     const existing = await ExamSession.findOne({ student: req.user.id, test: test._id, status: 'active' });
     if (existing) return res.json({ success: true, session: existing });
 
-    // Check scheduling (if scheduledDate exists)
-    if (test.scheduledDate) {
-      const now = new Date();
-      const sched = new Date(test.scheduledDate);
-      const deadline = new Date(sched.getTime() + (test.duration || 60) * 60 * 1000);
+    // Check archive/limit? User wants unlimited so we just count for attemptNumber
+    const previousResultsCount = await Result.countDocuments({ student: req.user.id, test: test._id });
 
+    // Check scheduling and expiry
+    const now = new Date();
+    if (test.scheduledDate) {
+      const sched = new Date(test.scheduledDate);
       if (now < sched) {
         return res.status(400).json({ success: false, message: `Test scheduled to start at ${sched.toLocaleString()}` });
       }
+    }
+
+    if (test.expiryDate) {
+      const expiry = new Date(test.expiryDate);
+      if (now >= expiry) {
+        return res.status(400).json({ success: false, message: 'Test has expired and is no longer available.' });
+      }
+    } else if (test.scheduledDate) {
+      // Fallback to duration if no explicit expiryDate is set
+      const deadline = new Date(new Date(test.scheduledDate).getTime() + (test.duration || 60) * 60 * 1000);
       if (now >= deadline) {
         return res.status(400).json({ success: false, message: 'Test window has already closed' });
       }
@@ -37,6 +48,7 @@ const startSession = async (req, res) => {
       startTime: new Date(),
       shuffledQuestions: shuffled.map(q => q._id),
       status: 'active',
+      attemptNumber: previousResultsCount + 1
     });
 
     res.status(201).json({ success: true, session, questions: shuffled });
@@ -54,9 +66,14 @@ const saveAnswer = async (req, res) => {
 
     // Hard deadline check for saving answer
     const test = await Test.findById(session.test);
-    if (test.scheduledDate) {
+    const now = new Date();
+    if (test.expiryDate) {
+      if (now >= new Date(new Date(test.expiryDate).getTime() + 5000)) { // 5s grace
+        return res.status(400).json({ success: false, message: 'Test window expired' });
+      }
+    } else if (test.scheduledDate) {
       const deadline = new Date(new Date(test.scheduledDate).getTime() + (test.duration || 60) * 60 * 1000 + 5000); // 5s grace
-      if (new Date() >= deadline) {
+      if (now >= deadline) {
         return res.status(400).json({ success: false, message: 'Test window expired' });
       }
     }
@@ -85,12 +102,16 @@ const submitSession = async (req, res) => {
     const test = await Test.findById(session.test).populate('questions');
 
     // Hard deadline check
-    if (test.scheduledDate) {
-      const now = new Date();
-      const sched = new Date(test.scheduledDate);
-      const deadline = new Date(sched.getTime() + (test.duration || 60) * 60 * 1000 + 10000); // 10s grace
+    const now = new Date();
+    if (test.expiryDate) {
+      if (now >= new Date(new Date(test.expiryDate).getTime() + 10000)) { // 10s grace
+        session.status = 'expired';
+        await session.save();
+        return res.status(400).json({ success: false, message: 'Test window has expired' });
+      }
+    } else if (test.scheduledDate) {
+      const deadline = new Date(new Date(test.scheduledDate).getTime() + (test.duration || 60) * 60 * 1000 + 10000); // 10s grace
       if (now >= deadline) {
-        // Force expiry if submitted late
         session.status = 'expired';
         await session.save();
         return res.status(400).json({ success: false, message: 'Test window has expired' });
@@ -122,6 +143,7 @@ const submitSession = async (req, res) => {
       passed: scoreData.passed,
       timeTaken,
       questionAnalysis: scoreData.questionAnalysis,
+      attemptNumber: session.attemptNumber || 1
     });
 
     res.json({ success: true, result });
@@ -140,10 +162,16 @@ const getSession = async (req, res) => {
 // GET /api/exam/result/:testId
 const getMyResult = async (req, res) => {
   try {
-    const result = await Result.findOne({ student: req.user.id, test: req.params.testId })
+    const results = await Result.find({ student: req.user.id, test: req.params.testId })
       .populate({ path: 'questionAnalysis.question', model: 'Question' })
-      .populate('test', 'title subject passmark');
-    res.json({ success: true, result });
+      .populate('test', 'title subject passmark')
+      .sort({ attemptNumber: -1 }); // Latest first
+
+    if (!results || results.length === 0) {
+      return res.status(404).json({ success: false, message: 'No results found' });
+    }
+
+    res.json({ success: true, results, result: results[0] }); // For backward compatibility, also return 'result' as the latest one
   } catch (err) { res.status(500).json({ success: false, message: err.message }); }
 };
 

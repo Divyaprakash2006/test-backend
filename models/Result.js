@@ -21,6 +21,7 @@ const resultSchema = new mongoose.Schema({
   timeTaken: { type: Number }, // seconds
   questionAnalysis: [questionAnalysisSchema],
   submittedAt: { type: Date, default: Date.now },
+  attemptNumber: { type: Number, default: 1 },
 }, { timestamps: true });
 
 module.exports = mongoose.model('Result', resultSchema);
