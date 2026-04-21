@@ -98,7 +98,7 @@ const addQuestion = async (req, res) => {
     const test = await Test.findById(req.params.id);
     if (!test) return res.status(404).json({ success: false, message: 'Test not found' });
     const question = await Question.create({ ...req.body, test: test._id, order: test.questions.length });
-    test.questions.push(question._id);
+    test.questions = [...new Set([...test.questions.map(id => id.toString()), question._id.toString()])];
     test.totalMarks += question.marks || 1;
     await test.save();
     res.status(201).json({ success: true, question });
@@ -154,7 +154,7 @@ const bulkAddQuestions = async (req, res) => {
     const createdQuestions = await Question.insertMany(questionDocs);
     const questionIds = createdQuestions.map(q => q._id);
 
-    test.questions.push(...questionIds);
+    test.questions = [...new Set([...test.questions.map(id => id.toString()), ...questionIds.map(id => id.toString())])];
     test.totalMarks += createdQuestions.reduce((sum, q) => sum + (q.marks || 1), 0);
     await test.save();
 
@@ -162,4 +162,19 @@ const bulkAddQuestions = async (req, res) => {
   } catch (err) { res.status(500).json({ success: false, message: err.message }); }
 };
 
-module.exports = { getTests, getTest, createTest, updateTest, deleteTest, addQuestion, updateQuestion, deleteQuestion, reorderQuestions, bulkAddQuestions };
+// DELETE /api/tests/:id/questions/all
+const deleteAllQuestions = async (req, res) => {
+  try {
+    const test = await Test.findById(req.params.id);
+    if (!test) return res.status(404).json({ success: false, message: 'Test not found' });
+    
+    await Question.deleteMany({ test: test._id });
+    test.questions = [];
+    test.totalMarks = 0;
+    await test.save();
+    
+    res.json({ success: true, message: 'All questions deleted' });
+  } catch (err) { res.status(500).json({ success: false, message: err.message }); }
+};
+
+module.exports = { getTests, getTest, createTest, updateTest, deleteTest, addQuestion, updateQuestion, deleteQuestion, reorderQuestions, bulkAddQuestions, deleteAllQuestions };
