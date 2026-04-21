@@ -249,4 +249,18 @@ const runCodeTest = async (req, res) => {
   } catch (err) { res.status(500).json({ success: false, message: err.message }); }
 };
 
-module.exports = { startSession, saveAnswer, submitSession, getSession, getMyResult, getMyAllResults, runCodeTest };
+// DELETE /api/exam/result/all
+const clearMyHistory = async (req, res) => {
+  try {
+    const studentId = req.user.id;
+    await Promise.all([
+      Result.deleteMany({ student: studentId }),
+      ExamSession.deleteMany({ student: studentId })
+    ]);
+    res.json({ success: true, message: 'All exam history and sessions cleared successfully.' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+module.exports = { startSession, saveAnswer, submitSession, getSession, getMyResult, getMyAllResults, runCodeTest, clearMyHistory };

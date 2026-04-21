@@ -12,5 +12,6 @@ router.post('/session/:sessionId/run', roleGuard('student'), runCodeTest);
 router.get('/session/:sessionId', roleGuard('student'), getSession);
 router.get('/result/all', roleGuard('student'), getMyAllResults);
 router.get('/result/:testId', roleGuard('student'), getMyResult);
+router.delete('/result/all', roleGuard('student'), clearMyHistory);
 
 module.exports = router;

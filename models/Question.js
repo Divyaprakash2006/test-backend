@@ -20,6 +20,7 @@ const questionSchema = new mongoose.Schema({
     isPublic: { type: Boolean, default: false }
   }],
   allowedLanguages: [{ type: String, default: 'javascript' }],
+  shuffleOptions: { type: Boolean, default: false },
   test: { type: mongoose.Schema.Types.ObjectId, ref: 'Test' },
   order: { type: Number, default: 0 },
 }, { timestamps: true });
