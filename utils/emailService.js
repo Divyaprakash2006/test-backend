@@ -20,20 +20,28 @@ const sendEnrollmentEmail = async (student, tests) => {
   const testList = Array.isArray(tests) ? tests : [tests];
   
   const testRowsHtml = testList.map(test => {
-    const scheduledTime = test.scheduledDate 
-      ? new Date(test.scheduledDate).toLocaleString('en-US', { 
-          dateStyle: 'medium', 
-          timeStyle: 'short' 
-        }) 
+    const format = { 
+      dateStyle: 'medium', 
+      timeStyle: 'short' 
+    };
+    
+    const startStr = test.scheduledDate 
+      ? new Date(test.scheduledDate).toLocaleString('en-US', format) 
       : 'Flexible';
+    
+    const endStr = test.expiryDate 
+      ? new Date(test.expiryDate).toLocaleString('en-US', format) 
+      : 'No Deadline';
     
     return `
       <div style="border-left: 4px solid #6366f1; background-color: #f8fafc; padding: 15px; margin-bottom: 12px; border-radius: 0 8px 8px 0;">
         <h3 style="margin: 0 0 5px 0; color: #1e293b; font-size: 16px;">${test.title}</h3>
-        <p style="margin: 0; color: #64748b; font-size: 13px;">
+        <p style="margin: 0 0 5px 0; color: #64748b; font-size: 13px;">
           <strong>Subject:</strong> ${test.subject || 'General'} | 
-          <strong>Duration:</strong> ${test.duration}m | 
-          <strong>Scheduled:</strong> ${scheduledTime}
+          <strong>Duration:</strong> ${test.duration}m
+        </p>
+        <p style="margin: 0; color: #64748b; font-size: 12px;">
+          <span style="color: #6366f1; font-weight: bold;">Available:</span> ${startStr} <span style="color: #94a3b8;">&rarr;</span> ${endStr}
         </p>
       </div>
     `;
