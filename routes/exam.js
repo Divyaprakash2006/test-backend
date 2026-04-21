@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const authMiddleware = require('../middleware/authMiddleware');
 const roleGuard = require('../middleware/roleGuard');
-const { startSession, saveAnswer, submitSession, getSession, getMyResult, getMyAllResults, runCodeTest } = require('../controllers/examController');
+const { startSession, saveAnswer, submitSession, getSession, getMyResult, getMyAllResults, runCodeTest, clearMyHistory } = require('../controllers/examController');
 
 router.use(authMiddleware);
 router.post('/start/:testId', roleGuard('student'), startSession);
