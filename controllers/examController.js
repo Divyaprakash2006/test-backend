@@ -48,7 +48,12 @@ const startSession = async (req, res) => {
       }
     }
 
-    const shuffled = [...test.questions].sort((a, b) => (a.order || 0) - (b.order || 0));
+    let shuffled = [...test.questions];
+    if (test.shuffleQuestions) {
+      shuffled = shuffled.sort(() => Math.random() - 0.5);
+    } else {
+      shuffled = shuffled.sort((a, b) => (a.order || 0) - (b.order || 0));
+    }
 
     const session = await ExamSession.create({
       student: req.user.id,

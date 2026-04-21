@@ -15,6 +15,7 @@ const testSchema = new mongoose.Schema({
   expiryDate: { type: Date },
   unlimitedAttempts: { type: Boolean, default: false },
   maxAttempts: { type: Number, default: 1 },
+  shuffleQuestions: { type: Boolean, default: false },
 }, { timestamps: true });
 
 module.exports = mongoose.model('Test', testSchema);
