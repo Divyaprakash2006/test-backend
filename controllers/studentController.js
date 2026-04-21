@@ -102,8 +102,13 @@ const enrollStudent = async (req, res) => {
     const student = await User.findById(req.params.id);
     if (!student) return res.status(404).json({ success: false, message: 'Student not found' });
 
+    const newlyEnrolledTests = [];
+
     for (const testId of testIds) {
-      if (!student.enrolledTests.includes(testId)) {
+      // Fix: Use .some and .toString() for reliable ID comparison
+      const alreadyEnrolled = student.enrolledTests.some(id => id.toString() === testId.toString());
+      
+      if (!alreadyEnrolled) {
         const t = await Test.findById(testId);
         if (t) {
           student.enrolledTests.push(testId);
@@ -117,26 +122,36 @@ const enrollStudent = async (req, res) => {
             type: 'enrolled',
           });
 
-          // Send enrollment email
-          try {
-            await sendEnrollmentEmail(student, t);
-          } catch (emailErr) {
-            console.error(`Failed to send enrollment email to ${student.email}:`, emailErr);
-          }
+          newlyEnrolledTests.push(t);
         }
       }
     }
-    await student.save();
 
-    await logActivity({
-      adminId: req.user.id,
-      action: 'enrolled',
-      targetType: 'student',
-      targetName: student.name,
-      details: `Enrolled in ${testIds.length} tests`
+    if (newlyEnrolledTests.length > 0) {
+      await student.save();
+      
+      // Send consolidated enrollment email
+      try {
+        await sendEnrollmentEmail(student, newlyEnrolledTests);
+      } catch (emailErr) {
+        console.error(`Failed to send enrollment email to ${student.email}:`, emailErr);
+      }
+
+      await logActivity({
+        adminId: req.user.id,
+        action: 'enrolled',
+        targetType: 'student',
+        targetName: student.name,
+        details: `Enrolled in ${newlyEnrolledTests.length} tests: ${newlyEnrolledTests.map(t => t.title).join(', ')}`
+      });
+    }
+
+    res.json({ 
+      success: true, 
+      message: newlyEnrolledTests.length > 0 
+        ? `Successfully enrolled in ${newlyEnrolledTests.length} tests.` 
+        : 'Student already enrolled in selected tests.' 
     });
-
-    res.json({ success: true, message: 'Enrolled successfully' });
   } catch (err) { res.status(500).json({ success: false, message: err.message }); }
 };
 
