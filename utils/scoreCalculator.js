@@ -1,13 +1,15 @@
 const { runCode } = require('./codeRunner');
 
 const deriveGradeFromPercentage = (percentage) => {
-  if (percentage >= 90) return { grade: 'O', gradePoint: 10.0 };
-  if (percentage >= 80) return { grade: 'A+', gradePoint: 9.0 };
-  if (percentage >= 70) return { grade: 'A', gradePoint: 8.0 };
-  if (percentage >= 60) return { grade: 'B+', gradePoint: 7.0 };
-  if (percentage >= 50) return { grade: 'B', gradePoint: 6.0 };
-  if (percentage >= 40) return { grade: 'C', gradePoint: 5.0 };
-  return { grade: 'U', gradePoint: 0.0 };
+  const gradePoint = Number((Math.max(0, Math.min(100, percentage)) / 10).toFixed(1));
+
+  if (gradePoint >= 9.0) return { grade: 'O', gradePoint };
+  if (gradePoint >= 8.0) return { grade: 'A+', gradePoint };
+  if (gradePoint >= 7.0) return { grade: 'A', gradePoint };
+  if (gradePoint >= 6.0) return { grade: 'B+', gradePoint };
+  if (gradePoint >= 5.0) return { grade: 'B', gradePoint };
+  if (gradePoint >= 4.0) return { grade: 'C', gradePoint };
+  return { grade: 'U', gradePoint };
 };
 
 /**
@@ -76,7 +78,7 @@ const calculateScore = async (test, answers) => {
     });
   }
 
-  const percentage = totalMarks > 0 ? Math.round((earnedMarks / totalMarks) * 100) : 0;
+  const percentage = totalMarks > 0 ? Number(((earnedMarks / totalMarks) * 100).toFixed(1)) : 0;
   const { grade, gradePoint } = deriveGradeFromPercentage(percentage);
 
   const isGradeMode = test.gradingMode === 'grade-point';
