@@ -4,6 +4,20 @@ const logActivity = require('../utils/activityLogger');
 const { createNotification } = require('./notificationController');
 const User = require('../models/User');
 
+const normalizeTestConfig = ({ passmark, gradingMode }) => {
+  const mode = gradingMode === 'grade-point' ? 'grade-point' : 'percentage';
+  const rawPassmark = Number(passmark);
+  const fallback = mode === 'grade-point' ? 5 : 50;
+  const min = 0;
+  const max = mode === 'grade-point' ? 10 : 100;
+  const safe = Number.isFinite(rawPassmark) ? rawPassmark : fallback;
+
+  return {
+    gradingMode: mode,
+    passmark: Math.min(max, Math.max(min, safe)),
+  };
+};
+
 // GET /api/tests
 const getTests = async (req, res) => {
   try {
@@ -25,8 +39,21 @@ const getTest = async (req, res) => {
 // POST /api/tests
 const createTest = async (req, res) => {
   try {
-    const { title, subject, description, duration, passmark, scheduledDate, expiryDate, unlimitedAttempts, maxAttempts } = req.body;
-    const test = await Test.create({ title, subject, description, duration, passmark, scheduledDate, expiryDate, unlimitedAttempts, maxAttempts, createdBy: req.user.id });
+    const { title, subject, description, duration, passmark, gradingMode, scheduledDate, expiryDate, unlimitedAttempts, maxAttempts } = req.body;
+    const normalized = normalizeTestConfig({ passmark, gradingMode });
+    const test = await Test.create({
+      title,
+      subject,
+      description,
+      duration,
+      passmark: normalized.passmark,
+      gradingMode: normalized.gradingMode,
+      scheduledDate,
+      expiryDate,
+      unlimitedAttempts,
+      maxAttempts,
+      createdBy: req.user.id,
+    });
     
     // Notify all students about the new test
     const students = await User.find({ role: 'student' });
@@ -55,8 +82,21 @@ const createTest = async (req, res) => {
 // PUT /api/tests/:id
 const updateTest = async (req, res) => {
   try {
-    const { title, subject, description, duration, passmark, scheduledDate, expiryDate, isPublished, unlimitedAttempts, maxAttempts } = req.body;
-    const updateData = { title, subject, description, duration, passmark, scheduledDate, expiryDate, isPublished, unlimitedAttempts, maxAttempts };
+    const { title, subject, description, duration, passmark, gradingMode, scheduledDate, expiryDate, isPublished, unlimitedAttempts, maxAttempts } = req.body;
+    const normalized = normalizeTestConfig({ passmark, gradingMode });
+    const updateData = {
+      title,
+      subject,
+      description,
+      duration,
+      passmark: normalized.passmark,
+      gradingMode: normalized.gradingMode,
+      scheduledDate,
+      expiryDate,
+      isPublished,
+      unlimitedAttempts,
+      maxAttempts,
+    };
     
     // Remove undefined fields to avoid overwriting with null unless intended
     Object.keys(updateData).forEach(key => updateData[key] === undefined && delete updateData[key]);

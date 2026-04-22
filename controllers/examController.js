@@ -141,6 +141,7 @@ const submitSession = async (req, res) => {
     session.score = scoreData.score;
     session.percentage = scoreData.percentage;
     session.grade = scoreData.grade;
+    session.gradePoint = scoreData.gradePoint;
     session.passed = scoreData.passed;
     session.timeTaken = timeTaken;
     await session.save();
@@ -153,6 +154,7 @@ const submitSession = async (req, res) => {
       totalMarks: scoreData.totalMarks,
       percentage: scoreData.percentage,
       grade: scoreData.grade,
+      gradePoint: scoreData.gradePoint,
       passed: scoreData.passed,
       timeTaken,
       questionAnalysis: scoreData.questionAnalysis,
@@ -177,7 +179,7 @@ const getMyResult = async (req, res) => {
   try {
     const results = await Result.find({ student: req.user.id, test: req.params.testId })
       .populate({ path: 'questionAnalysis.question', model: 'Question' })
-      .populate('test', 'title subject passmark unlimitedAttempts maxAttempts scheduledDate expiryDate duration')
+      .populate('test', 'title subject passmark gradingMode unlimitedAttempts maxAttempts scheduledDate expiryDate duration')
       .sort({ attemptNumber: -1 }); // Latest first
 
     if (!results || results.length === 0) {

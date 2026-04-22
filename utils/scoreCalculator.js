@@ -1,5 +1,15 @@
 const { runCode } = require('./codeRunner');
 
+const deriveGradeFromPercentage = (percentage) => {
+  if (percentage >= 90) return { grade: 'O', gradePoint: 10.0 };
+  if (percentage >= 80) return { grade: 'A+', gradePoint: 9.0 };
+  if (percentage >= 70) return { grade: 'A', gradePoint: 8.0 };
+  if (percentage >= 60) return { grade: 'B+', gradePoint: 7.0 };
+  if (percentage >= 50) return { grade: 'B', gradePoint: 6.0 };
+  if (percentage >= 40) return { grade: 'C', gradePoint: 5.0 };
+  return { grade: 'U', gradePoint: 0.0 };
+};
+
 /**
  * Calculate score for an exam session
  * @param {Object} test - populated test with questions
@@ -67,9 +77,14 @@ const calculateScore = async (test, answers) => {
   }
 
   const percentage = totalMarks > 0 ? Math.round((earnedMarks / totalMarks) * 100) : 0;
-  const passed = percentage >= (test.passmark || 50);
+  const { grade, gradePoint } = deriveGradeFromPercentage(percentage);
 
-  return { score: earnedMarks, totalMarks, percentage, passed, questionAnalysis };
+  const isGradeMode = test.gradingMode === 'grade-point';
+  const threshold = Number(test.passmark);
+  const safeThreshold = Number.isFinite(threshold) ? threshold : (isGradeMode ? 5 : 50);
+  const passed = isGradeMode ? gradePoint >= safeThreshold : percentage >= safeThreshold;
+
+  return { score: earnedMarks, totalMarks, percentage, grade, gradePoint, passed, questionAnalysis };
 };
 
 module.exports = { calculateScore };

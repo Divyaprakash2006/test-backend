@@ -6,6 +6,7 @@ const testSchema = new mongoose.Schema({
   description: { type: String, default: '' },
   duration: { type: Number, required: true }, // in minutes
   passmark: { type: Number, default: 0 },  // percentage
+  gradingMode: { type: String, enum: ['percentage', 'grade-point'], default: 'percentage' },
   scheduledDate: { type: Date },
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   questions: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Question' }],

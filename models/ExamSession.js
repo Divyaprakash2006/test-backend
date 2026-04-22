@@ -18,6 +18,7 @@ const examSessionSchema = new mongoose.Schema({
   score: { type: Number, default: 0 },
   percentage: { type: Number, default: 0 },
   grade: { type: String, default: '' },
+  gradePoint: { type: Number, default: 0 },
   passed: { type: Boolean, default: false },
   timeTaken: { type: Number, default: 0 }, // total seconds
   attemptNumber: { type: Number, default: 1 },

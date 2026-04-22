@@ -17,6 +17,7 @@ const resultSchema = new mongoose.Schema({
   totalMarks: { type: Number, required: true },
   percentage: { type: Number, required: true },
   grade: { type: String },
+  gradePoint: { type: Number, default: 0 },
   passed: { type: Boolean, required: true },
   timeTaken: { type: Number }, // seconds
   questionAnalysis: [questionAnalysisSchema],
