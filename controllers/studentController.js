@@ -52,7 +52,7 @@ const createStudent = async (req, res) => {
       targetName: student.name
     });
 
-    res.status(201).json({ success: true, student: { id: student._id, name: student.name, email: student.email, batch: student.batch, rollNo: student.rollNo } });
+    res.status(201).json({ success: true, student: { _id: student._id, name: student.name, email: student.email, batch: student.batch, rollNo: student.rollNo } });
   } catch (err) { res.status(500).json({ success: false, message: err.message }); }
 };
 
