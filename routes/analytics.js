@@ -3,6 +3,8 @@ const router = express.Router();
 const authMiddleware = require('../middleware/authMiddleware');
 const roleGuard = require('../middleware/roleGuard');
 const { getKPIs, getMonthly, getRecentActivity, clearActivities, clearAllResults, getTestResults, getAllResults } = require('../controllers/analyticsController');
+// Diagnostic health check
+router.get('/health', (req, res) => res.json({ success: true, message: 'Analytics API is online' }));
 
 router.use(authMiddleware);
 router.use(roleGuard('admin'));

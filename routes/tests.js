@@ -6,6 +6,8 @@ const {
   getTests, getTest, createTest, updateTest, deleteTest,
   addQuestion, updateQuestion, deleteQuestion, reorderQuestions, bulkAddQuestions, deleteAllQuestions
 } = require('../controllers/testController');
+// Diagnostic health check
+router.get('/health', (req, res) => res.json({ success: true, message: 'Tests API is online' }));
 
 router.use(authMiddleware);
 router.get('/', getTests);

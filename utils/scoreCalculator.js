@@ -60,14 +60,21 @@ const calculateScore = async (test, answers) => {
         const testCases = q.testCases || [];
         
         let earnedForQ = 0;
+        const marksPerTestCase = testCases.length > 0 ? (maxMarks / testCases.length) : 0;
+
         for (const tc of testCases) {
           const runResult = await runCode(code, lang, tc.input);
-          if (runResult.output.trim() === tc.output.trim()) {
-            earnedForQ += (tc.marks || 0);
+          // Standardize comparison: trim and remove carriage returns
+          const actual = (runResult.output || '').replace(/\r\n/g, '\n').trim();
+          const expected = (tc.output || '').replace(/\r\n/g, '\n').trim();
+
+          if (actual === expected) {
+            earnedForQ += (tc.marks || marksPerTestCase);
           }
         }
-        marksAwarded = earnedForQ;
-        isCorrect = marksAwarded === maxMarks && maxMarks > 0;
+        // Round to 2 decimal places and cap at maxMarks
+        marksAwarded = Math.min(maxMarks, Number(earnedForQ.toFixed(2)));
+        isCorrect = marksAwarded >= (maxMarks * 0.99) && maxMarks > 0; // Use a small epsilon for float comparison
       } else {
         if (q.type === 'mcq-multi' || Array.isArray(q.correctAnswer)) {
           const stuArr = normalizeForCompare(normalizeMultiAnswers(studentAnswer));

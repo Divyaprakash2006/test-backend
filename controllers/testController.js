@@ -40,6 +40,10 @@ const getTest = async (req, res) => {
 const createTest = async (req, res) => {
   try {
     const { title, subject, description, duration, passmark, gradingMode, scheduledDate, expiryDate, unlimitedAttempts, maxAttempts } = req.body;
+    
+    if (duration && Number(duration) <= 0) return res.status(400).json({ success: false, message: 'Duration must be a positive number' });
+    if (!unlimitedAttempts && maxAttempts && Number(maxAttempts) <= 0) return res.status(400).json({ success: false, message: 'Max attempts must be at least 1' });
+
     const normalized = normalizeTestConfig({ passmark, gradingMode });
     const test = await Test.create({
       title,
@@ -83,6 +87,10 @@ const createTest = async (req, res) => {
 const updateTest = async (req, res) => {
   try {
     const { title, subject, description, duration, passmark, gradingMode, scheduledDate, expiryDate, isPublished, unlimitedAttempts, maxAttempts } = req.body;
+
+    if (duration !== undefined && Number(duration) <= 0) return res.status(400).json({ success: false, message: 'Duration must be a positive number' });
+    if (unlimitedAttempts === false && maxAttempts && Number(maxAttempts) <= 0) return res.status(400).json({ success: false, message: 'Max attempts must be at least 1' });
+
     const normalized = normalizeTestConfig({ passmark, gradingMode });
     const updateData = {
       title,

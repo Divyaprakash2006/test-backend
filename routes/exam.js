@@ -3,6 +3,8 @@ const router = express.Router();
 const authMiddleware = require('../middleware/authMiddleware');
 const roleGuard = require('../middleware/roleGuard');
 const { startSession, saveAnswer, submitSession, getSession, getMyResult, getMyAllResults, runCodeTest, clearMyHistory } = require('../controllers/examController');
+// Diagnostic health check
+router.get('/health', (req, res) => res.json({ success: true, message: 'Exam API is online' }));
 
 router.use(authMiddleware);
 router.post('/start/:testId', roleGuard('student'), startSession);

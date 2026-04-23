@@ -7,18 +7,36 @@ const Activity = require('../models/Activity');
 // GET /api/analytics/kpi
 const getKPIs = async (req, res) => {
   try {
-    const [totalStudents, totalTests, results] = await Promise.all([
+    const [totalStudents, totalTests, resultStats] = await Promise.all([
       User.countDocuments({ role: 'student' }),
       Test.countDocuments(),
-      Result.find(),
+      Result.aggregate([
+        {
+          $group: {
+            _id: null,
+            avgScore: { $avg: '$percentage' },
+            totalResults: { $sum: 1 },
+            passedCount: { $sum: { $cond: ['$passed', 1, 0] } }
+          }
+        }
+      ])
     ]);
-    const avgScore = results.length > 0
-      ? Math.round(results.reduce((s, r) => s + r.percentage, 0) / results.length)
+
+    const stats = resultStats[0] || { avgScore: 0, totalResults: 0, passedCount: 0 };
+    const passRate = stats.totalResults > 0 
+      ? Math.round((stats.passedCount / stats.totalResults) * 100) 
       : 0;
-    const passRate = results.length > 0
-      ? Math.round((results.filter(r => r.passed).length / results.length) * 100)
-      : 0;
-    res.json({ success: true, data: { totalStudents, totalTests, avgScore, passRate, totalResults: results.length } });
+
+    res.json({ 
+      success: true, 
+      data: { 
+        totalStudents, 
+        totalTests, 
+        avgScore: Math.round(stats.avgScore || 0), 
+        passRate, 
+        totalResults: stats.totalResults 
+      } 
+    });
   } catch (err) { res.status(500).json({ success: false, message: err.message }); }
 };
 

@@ -12,8 +12,11 @@ const startSession = async (req, res) => {
     if (!test) return res.status(404).json({ success: false, message: 'Test not found' });
 
     // Check if already active session
-    const existing = await ExamSession.findOne({ student: req.user.id, test: test._id, status: 'active' });
-    if (existing) return res.json({ success: true, session: existing });
+    const existing = await ExamSession.findOne({ student: req.user.id, test: test._id, status: 'active' })
+      .populate('shuffledQuestions');
+    if (existing) {
+      return res.json({ success: true, session: existing, questions: existing.shuffledQuestions });
+    }
 
     // Check archive/limit? User wants unlimited so we just count for attemptNumber
     const previousResultsCount = await Result.countDocuments({ student: req.user.id, test: test._id });
@@ -77,6 +80,11 @@ const saveAnswer = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Session not active' });
     }
 
+    // Ownership check
+    if (session.student.toString() !== req.user.id) {
+      return res.status(403).json({ success: false, message: 'Unauthorized access to session' });
+    }
+
     // Hard deadline check for saving answer
     const test = await Test.findById(session.test);
     const now = new Date();
@@ -107,6 +115,12 @@ const submitSession = async (req, res) => {
   try {
     const session = await ExamSession.findById(req.params.sessionId);
     if (!session) return res.status(404).json({ success: false, message: 'Session not found' });
+    
+    // Ownership check
+    if (session.student.toString() !== req.user.id) {
+      return res.status(403).json({ success: false, message: 'Unauthorized access to session' });
+    }
+
     if (session.status !== 'active') {
       const result = await Result.findOne({ session: session._id }).populate('test', 'title subject');
       return res.json({ success: true, result });
@@ -170,6 +184,12 @@ const getSession = async (req, res) => {
   try {
     const session = await ExamSession.findById(req.params.sessionId).populate('shuffledQuestions').populate('student', 'name rollNo');
     if (!session) return res.status(404).json({ success: false, message: 'Session not found' });
+
+    // Ownership check (only student or admin can see session)
+    if (req.user.role !== 'admin' && session.student._id.toString() !== req.user.id) {
+      return res.status(403).json({ success: false, message: 'Unauthorized access to session' });
+    }
+
     res.json({ success: true, session });
   } catch (err) { res.status(500).json({ success: false, message: err.message }); }
 };
@@ -203,7 +223,15 @@ const getMyAllResults = async (req, res) => {
 // POST /api/exam/session/:sessionId/run
 const runCodeTest = async (req, res) => {
   try {
+    const { sessionId } = req.params;
     const { questionId, code, language, customInput } = req.body;
+    
+    // Ownership check
+    const session = await ExamSession.findById(sessionId);
+    if (!session || session.student.toString() !== req.user.id) {
+      return res.status(403).json({ success: false, message: 'Unauthorized access' });
+    }
+
     const question = await Question.findById(questionId);
     if (!question) return res.status(404).json({ success: false, message: 'Question not found' });
 

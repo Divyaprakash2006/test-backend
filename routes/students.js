@@ -17,6 +17,8 @@ const upload = multer({
     cb(null, true); // accept all, backend will validate
   }
 });
+// Diagnostic health check
+router.get('/health', (req, res) => res.json({ success: true, message: 'Students API is online' }));
 
 router.use(authMiddleware);
 router.use(roleGuard('admin'));
