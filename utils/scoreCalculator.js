@@ -12,6 +12,23 @@ const deriveGradeFromPercentage = (percentage) => {
   return { grade: 'U', gradePoint };
 };
 
+const normalizeMultiAnswers = (value) => {
+  if (Array.isArray(value)) {
+    return value.map(v => String(v || '').trim()).filter(Boolean);
+  }
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (!trimmed) return [];
+    return trimmed.split(/[\n,;|]+/).map(v => v.trim()).filter(Boolean);
+  }
+  if (value === undefined || value === null) return [];
+  const text = String(value).trim();
+  return text ? [text] : [];
+};
+
+const normalizeForCompare = (values) =>
+  values.map(v => String(v).trim().toLowerCase());
+
 /**
  * Calculate score for an exam session
  * @param {Object} test - populated test with questions
@@ -52,11 +69,14 @@ const calculateScore = async (test, answers) => {
         marksAwarded = earnedForQ;
         isCorrect = marksAwarded === maxMarks && maxMarks > 0;
       } else {
-        if (Array.isArray(q.correctAnswer)) {
-          const stuArr = Array.isArray(studentAnswer) ? studentAnswer : [studentAnswer];
+        if (q.type === 'mcq-multi' || Array.isArray(q.correctAnswer)) {
+          const stuArr = normalizeForCompare(normalizeMultiAnswers(studentAnswer));
+          const correctArr = normalizeForCompare(normalizeMultiAnswers(q.correctAnswer));
+          const studentSet = new Set(stuArr);
+          const correctSet = new Set(correctArr);
           isCorrect =
-            stuArr.length === q.correctAnswer.length &&
-            stuArr.every(a => q.correctAnswer.includes(a));
+            studentSet.size === correctSet.size &&
+            [...studentSet].every(a => correctSet.has(a));
         } else {
           isCorrect =
             String(studentAnswer).trim().toLowerCase() ===
@@ -68,10 +88,17 @@ const calculateScore = async (test, answers) => {
 
     earnedMarks += marksAwarded;
 
+    const normalizedStudentAnswer = (q.type === 'mcq-multi' || Array.isArray(q.correctAnswer))
+      ? normalizeMultiAnswers(studentAnswer)
+      : studentAnswer;
+    const normalizedCorrectAnswer = (q.type === 'mcq-multi' || Array.isArray(q.correctAnswer))
+      ? normalizeMultiAnswers(q.correctAnswer)
+      : q.correctAnswer;
+
     questionAnalysis.push({
       question: q._id,
-      studentAnswer,
-      correctAnswer: q.correctAnswer,
+      studentAnswer: normalizedStudentAnswer,
+      correctAnswer: normalizedCorrectAnswer,
       isCorrect,
       marksAwarded,
       maxMarks,
