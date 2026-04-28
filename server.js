@@ -104,12 +104,19 @@ io.on('connection', (socket) => {
 // Make io accessible globally
 global.io = io;
 
+// Connect to MongoDB
 mongoose.connect(DB_URI)
   .then(() => {
     console.log('✅ MongoDB connected');
-    server.listen(PORT, '0.0.0.0', () => console.log(`🚀 Server running on port ${PORT}`));
+    // Only start server if not running as a Vercel serverless function
+    if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+      server.listen(PORT, '0.0.0.0', () => console.log(`🚀 Server running on port ${PORT}`));
+    }
   })
   .catch(err => {
     console.error('❌ MongoDB connection error:', err.message);
-    process.exit(1);
+    if (!process.env.VERCEL) process.exit(1);
   });
+
+// Export the app for Vercel
+module.exports = app;
